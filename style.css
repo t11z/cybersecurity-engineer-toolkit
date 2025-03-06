@@ -1,0 +1,47 @@
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    margin-bottom: 50px;
+}
+.container {
+    width: 60%;
+    margin: 0 auto; /* Center the container */
+    max-width: 1200px; /* Optional: Set a maximum width */
+}
+.card {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+}
+.card-title {
+    color: #ff9800;
+}
+.btn-primary {
+    background-color: #ff9800;
+    border-color: #ff9800;
+}
+.btn-primary:hover {
+    background-color: #e68900;
+    border-color: #e68900;
+}
+.note {
+    color: #ddd;
+    background-color: #343434;
+    border-left: 3px solid #ff9800;
+    padding-left: 15px;
+}
+.footer {
+    background-color: #1e1e1e;
+    color: #ddd;
+    padding: 10px;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+.footer a {
+    color: #ff9800;
+}
+pre, code {
+    color: #ddd;
+    margin: 2px;
+}

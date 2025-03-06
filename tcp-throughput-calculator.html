@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Engineer Toolkit</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5 text-left">
+        <h1 class="mb-4 text-center">TCP Throughput Calculator</h1>
+        <label for="bandwidth">Line Speed (Mbit/s):</label>
+        <input type="number" class="form-control mb-3" id="bandwidth" value="100" step="0.01" min="0">
+        
+        <label for="rtt">Round Trip Time (ms):</label>
+        <input type="number" class="form-control mb-3" id="rtt" value="50" step="0.01" min="0">
+        
+        <label for="windowSize">TCP Window Size (KB):</label>
+        <input type="number" class="form-control mb-3" id="windowSize" value="64" step="1" min="0">
+
+        <label for="scalingFactor">Window Scaling Factor (shift):</label>
+        <input type="number" class="form-control mb-3" id="scalingFactor" value="0" step="1" min="0" max="14">
+        
+        <label for="packetSize">Packet Size (bytes):</label>
+        <input type="number" class="form-control mb-3" id="packetSize" value="1500" step="1" min="1">
+        
+        <label for="overhead">TCP/IP Overhead (bytes):</label>
+        <input type="number" class="form-control mb-3" id="overhead" value="40" step="1" min="0">
+
+        <label for="concurrentSessions">Number of concurrent Sessions:</label>
+        <input type="number" class="form-control mb-3" id="concurrentSessions" value="1" step="1" min="1">
+        
+        <button class="btn btn-primary mb-3" onclick="calculateThroughput()">Calculate</button>
+
+        <button id="backButton" class="btn btn-primary mb-3" onclick="history.back()">Back</button>
+
+        <div class="result" id="result"></div>
+    </div>
+    <div class="footer">
+        &copy; 2025 Thomas Sprock - <a href="mailto:sprock.thomas@outlook.com" onclick="this.href=this.href.replace('sprock.thomas','sprock.thomas').replace('outlook','outlook').replace('com','com')">[email&nbsp;protected]</a>
+    </div>
+    <script>
+    function calculateThroughput() {
+      // Get user input
+      let bandwidth        = parseFloat(document.getElementById('bandwidth').value);   // Mbit/s
+      let rttMs            = parseFloat(document.getElementById('rtt').value);         // ms
+      let windowSizeKB     = parseFloat(document.getElementById('windowSize').value);  // KB
+      let scalingFactor    = parseInt(document.getElementById('scalingFactor').value); // shift
+      let packetSize       = parseFloat(document.getElementById('packetSize').value);  // bytes
+      let overheadBytes    = parseFloat(document.getElementById('overhead').value);    // bytes
+      let concurrentSessions = parseInt(document.getElementById('concurrentSessions').value); // Anzahl Sessions
+
+      // RTT in seconds
+      let rttSeconds = rttMs / 1000;
+
+      // Base window in Bytes
+      let baseWindowBytes = windowSizeKB * 1024;
+      // Effective window with scaling
+      let effectiveWindowBytes = baseWindowBytes * Math.pow(2, scalingFactor);
+
+      // ------------------------------------------------------
+      // 1) Theoretical single session throughput (window-limited)
+      // ------------------------------------------------------
+      // bits per second
+      let singleSessionBits = (effectiveWindowBytes * 8) / rttSeconds;
+      // megabits per second
+      let singleSessionMbps = singleSessionBits / 1e6;
+
+      // ------------------------------------------------------
+      // 2) Theoretical ALL session throughput
+      // ------------------------------------------------------
+      let totalWindowLimitedMbps = singleSessionMbps * concurrentSessions;
+
+      // ------------------------------------------------------
+      // 3) Effective gross throughput (limited by link speed)
+      // ------------------------------------------------------
+      // Minimum aus (Fenster-getriebenem Gesamt-Durchsatz) und Bandbreite
+      let totalGrossThroughputMbps = Math.min(totalWindowLimitedMbps, bandwidth);
+
+      // ------------------------------------------------------
+      // 4) Effective gross throughput per session (limited by link speed)
+      // ------------------------------------------------------
+      // Falls die Bandbreite limitiert, teilen sich alle Sessions diese Bandbreite
+      let grossThroughputPerSession = totalGrossThroughputMbps / concurrentSessions;
+
+      // ------------------------------------------------------
+      // 5) Net throughput (minus overhead)
+      // ------------------------------------------------------
+      // Overhead ratio: (payload per packet / packet size)
+      let overheadRatio = (packetSize - overheadBytes) / packetSize;
+      // overall net throughput
+      let totalNetThroughputMbps = totalGrossThroughputMbps * overheadRatio;
+      // per-session net throughput
+      let netThroughputPerSession = totalNetThroughputMbps / concurrentSessions;
+
+      // ------------------------------------------------------
+      // Show results
+      // ------------------------------------------------------
+      let resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = `
+        <div><strong>Single Session (Window-limited, Theoretical):</strong> ${singleSessionMbps.toFixed(2)} Mbit/s</div>
+        <div><strong>Total (Window-limited, Theoretical):</strong> ${totalWindowLimitedMbps.toFixed(2)} Mbit/s</div>
+        <div><strong>Total (Gross, limited by Bandwidth):</strong> ${totalGrossThroughputMbps.toFixed(2)} Mbit/s</div>
+        <div><strong>Gross Throughput per Session:</strong> ${grossThroughputPerSession.toFixed(2)} Mbit/s</div>
+        <div><strong>Total Net Throughput (after Overhead):</strong> ${totalNetThroughputMbps.toFixed(2)} Mbit/s</div>
+        <div><strong>Net Throughput per Session:</strong> ${netThroughputPerSession.toFixed(2)} Mbit/s</div>
+      `;
+    }
+    </script>
+</body>
+</html>
